@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>競馬 軸馬マスター v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Bebas+Neue&display=swap');
+
+:root {
+–bg: #080c0f;
+–s1: #0f1419;
+–s2: #161d24;
+–s3: #1e2830;
+–border: #2a3540;
+–gold: #d4a843;
+–red: #e05555;
+–green: #3dba78;
+–blue: #4a8fd4;
+–text: #e8edf2;
+–dim: #7a8fa0;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(–bg); color: var(–text); font-family: ‘Noto Sans JP’, sans-serif; min-height: 100vh; padding-bottom: 70px; }
+
+.hdr {
+background: linear-gradient(135deg, #0a1015 0%, #131c24 100%);
+border-bottom: 1px solid var(–gold);
+padding: 12px 16px;
+display: flex; align-items: center; justify-content: space-between;
+position: sticky; top: 0; z-index: 200;
+}
+.hdr-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 24px; letter-spacing: 3px; color: var(–gold); text-shadow: 0 0 20px rgba(212,168,67,0.4); }
+.hdr-sub { font-size: 9px; color: var(–dim); letter-spacing: 1px; }
+.budget-pill { background: var(–s3); border: 1px solid var(–gold); border-radius: 20px; padding: 5px 12px; display: flex; align-items: center; gap: 6px; }
+.budget-pill input { background: transparent; border: none; color: var(–gold); font-size: 14px; font-family: ‘Bebas Neue’, sans-serif; width: 72px; outline: none; text-align: right; }
+.budget-pill span { font-size: 10px; color: var(–dim); }
+
+.tabs { display: flex; background: var(–s1); border-bottom: 1px solid var(–border); overflow-x: auto; }
+.tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 11px; font-weight: 700; color: var(–dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; letter-spacing: 0.5px; min-width: 60px; }
+.tab.active { color: var(–gold); border-bottom-color: var(–gold); background: rgba(212,168,67,0.04); }
+
+.sec { display: none; padding: 14px; }
+.sec.active { display: block; }
+
+.card { background: var(–s2); border: 1px solid var(–border); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+.card-label { font-size: 10px; color: var(–gold); letter-spacing: 2px; font-weight: 700; margin-bottom: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.ig label { font-size: 10px; color: var(–dim); display: block; margin-bottom: 3px; }
+.ig input, .ig select, .ig textarea { width: 100%; background: var(–s1); border: 1px solid var(–border); border-radius: 6px; color: var(–text); font-size: 13px; font-family: ‘Noto Sans JP’, sans-serif; padding: 7px 8px; outline: none; }
+.ig input:focus, .ig select:focus, .ig textarea:focus { border-color: var(–gold); }
+
+/* AI SCAN AREA */
+.scan-zone {
+border: 2px dashed var(–border);
+border-radius: 12px;
+padding: 20px;
+text-align: center;
+cursor: pointer;
+transition: all 0.2s;
+position: relative;
+margin-bottom: 12px;
+}
+.scan-zone:hover, .scan-zone.drag { border-color: var(–gold); background: rgba(212,168,67,0.04); }
+.scan-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.scan-icon { font-size: 36px; margin-bottom: 8px; }
+.scan-text { font-size: 13px; font-weight: 700; color: var(–gold); margin-bottom: 4px; }
+.scan-sub { font-size: 11px; color: var(–dim); }
+
+.scan-preview { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: contain; display: none; }
+
+.btn-ai {
+width: 100%;
+background: linear-gradient(135deg, #1a3a5c 0%, #0d2040 100%);
+color: var(–blue);
+border: 1px solid var(–blue);
+border-radius: 10px;
+padding: 14px;
+font-size: 14px; font-weight: 900;
+font-family: ‘Noto Sans JP’, sans-serif;
+letter-spacing: 1px; cursor: pointer;
+margin-bottom: 12px;
+transition: all 0.2s;
+display: none;
+}
+.btn-ai:hover { background: rgba(74,143,212,0.15); }
+.btn-ai.show { display: block; }
+
+.ai-status {
+background: var(–s3); border: 1px solid var(–border);
+border-radius: 8px; padding: 12px;
+font-size: 12px; text-align: center;
+margin-bottom: 12px; display: none;
+}
+.ai-status.show { display: block; }
+.ai-status.loading { border-color: var(–blue); color: var(–blue); }
+.ai-status.done { border-color: var(–green); color: var(–green); }
+.ai-status.error { border-color: var(–red); color: var(–red); }
+
+.loading-dots::after {
+content: ‘…’;
+animation: dots 1.2s steps(4, end) infinite;
+}
+@keyframes dots {
+0%, 20% { content: ‘’; }
+40% { content: ‘.’; }
+60% { content: ‘..’; }
+80%, 100% { content: ‘…’; }
+}
+
+.kelly-row { display: flex; background: var(–s1); border-radius: 8px; padding: 3px; gap: 3px; margin-bottom: 12px; }
+.km-btn { flex: 1; padding: 7px 4px; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: ‘Noto Sans JP’, sans-serif; cursor: pointer; background: transparent; color: var(–dim); transition: all 0.2s; }
+.km-btn.active { background: var(–gold); color: #000; }
+
+.h-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.btn-add { background: var(–gold); color: #000; border: none; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 700; font-family: ‘Noto Sans JP’, sans-serif; cursor: pointer; }
+.btn-sm { background: transparent; color: var(–dim); border: 1px solid var(–border); border-radius: 20px; padding: 5px 10px; font-size: 11px; font-family: ‘Noto Sans JP’, sans-serif; cursor: pointer; }
+
+.hcard { background: var(–s2); border: 1px solid var(–border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.3s; }
+.hcard.elim { border-color: var(–red); }
+.hcard.pick { border-color: var(–green); }
+.hcard.watch { border-color: var(–gold); }
+
+.htop { display: flex; align-items: center; padding: 10px 12px; gap: 8px; }
+.hnum { width: 26px; height: 26px; border-radius: 50%; background: var(–s3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(–gold); flex-shrink: 0; }
+.hname { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(–border); color: var(–text); font-size: 14px; font-family: ‘Noto Sans JP’, sans-serif; padding: 2px 0; outline: none; }
+.hname:focus { border-bottom-color: var(–gold); }
+.hinp-label { font-size: 9px; color: var(–dim); text-align: center; margin-bottom: 2px; }
+.btn-x { background: none; border: none; color: var(–dim); font-size: 18px; cursor: pointer; }
+
+.cklist { padding: 0 12px 10px; }
+.ci { border-bottom: 1px solid var(–border); padding: 8px 0; }
+.ci:last-child { border-bottom: none; }
+.ci-top { display: flex; align-items: center; gap: 6px; }
+.ci-label { flex: 1; font-size: 12px; font-weight: 700; }
+.sc-btns { display: flex; gap: 3px; }
+.sc-btn { width: 30px; height: 26px; border-radius: 5px; border: 1px solid var(–border); background: var(–s1); color: var(–dim); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.sc-btn.g { background: var(–green); color: #000; border-color: var(–green); }
+.sc-btn.m { background: var(–gold); color: #000; border-color: var(–gold); }
+.sc-btn.b { background: var(–red); color: #fff; border-color: var(–red); }
+.elim-inp { width: 100%; margin-top: 5px; background: rgba(224,85,85,0.08); border: 1px solid rgba(224,85,85,0.25); border-radius: 5px; color: var(–text); font-size: 11px; font-family: ‘Noto Sans JP’, sans-serif; padding: 5px 7px; outline: none; display: none; }
+.elim-inp.show { display: block; }
+
+.sfooter { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(–s3); border-top: 1px solid var(–border); }
+.snum { font-family: ‘Bebas Neue’, sans-serif; font-size: 24px; min-width: 44px; text-align: center; }
+.sbar-wrap { flex: 1; }
+.sbar-label { font-size: 10px; color: var(–dim); margin-bottom: 3px; }
+.sbar { height: 3px; background: var(–border); border-radius: 2px; overflow: hidden; }
+.sfill { height: 100%; border-radius: 2px; transition: width 0.4s, background 0.4s; }
+.vbadge { font-size: 11px; font-weight: 900; border-radius: 20px; padding: 3px 10px; letter-spacing: 1px; }
+.vb-pick { background: var(–green); color: #000; }
+.vb-watch { background: var(–gold); color: #000; }
+.vb-elim { background: var(–red); color: #fff; }
+.vb-none { background: var(–border); color: var(–dim); }
+
+.btn-analyze { width: 100%; margin-top: 14px; background: linear-gradient(135deg, var(–gold) 0%, #8a6010 100%); color: #000; border: none; border-radius: 10px; padding: 16px; font-size: 16px; font-weight: 900; font-family: ‘Noto Sans JP’, sans-serif; letter-spacing: 2px; cursor: pointer; box-shadow: 0 4px 20px rgba(212,168,67,0.2); transition: opacity 0.2s; }
+.btn-analyze:active { opacity: 0.8; }
+
+.chip { border-radius: 6px; padding: 4px 9px; font-size: 11px; font-weight: 700; }
+.chip-blue { background: rgba(74,143,212,0.15); color: #7ab8f0; }
+.chip-gold { background: rgba(212,168,67,0.15); color: var(–gold); }
+.chip-green { background: rgba(61,186,120,0.15); color: var(–green); }
+.chip-bet { background: rgba(61,186,120,0.2); color: var(–green); font-size: 13px; }
+
+.verdict-hero { text-align: center; padding: 20px 0 14px; }
+.vh-label { font-size: 11px; color: var(–dim); letter-spacing: 2px; margin-bottom: 6px; }
+.vh-name { font-size: 28px; font-weight: 900; margin-bottom: 4px; }
+.vh-sub { font-size: 12px; color: var(–dim); }
+
+.rank-row { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(–border); }
+.rank-row:last-child { border-bottom: none; }
+.rr-n { font-family: ‘Bebas Neue’, sans-serif; font-size: 20px; color: var(–gold); min-width: 26px; }
+.rr-info { flex: 1; }
+.rr-name { font-size: 14px; font-weight: 700; }
+.rr-detail { font-size: 10px; color: var(–dim); margin-top: 2px; }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.stat-cell { background: var(–s2); border: 1px solid var(–border); border-radius: 8px; padding: 10px; text-align: center; }
+.stat-n { font-family: ‘Bebas Neue’, sans-serif; font-size: 26px; }
+.stat-l { font-size: 9px; color: var(–dim); margin-top: 2px; letter-spacing: 1px; }
+
+.hi { background: var(–s2); border: 1px solid var(–border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+.hi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.hi-race { font-size: 12px; font-weight: 700; color: var(–dim); }
+.hi-date { font-size: 10px; color: var(–dim); }
+.hi-horse { font-size: 17px; font-weight: 900; margin-bottom: 3px; }
+.hi-meta { font-size: 11px; color: var(–gold); margin-bottom: 5px; }
+.hi-reason { font-size: 11px; color: var(–dim); line-height: 1.6; }
+.hi-badge { display: inline-block; margin-top: 7px; font-size: 11px; font-weight: 900; border-radius: 20px; padding: 3px 12px; }
+.hib-win { background: var(–green); color: #000; }
+.hib-lose { background: var(–red); color: #fff; }
+.hib-pend { background: var(–border); color: var(–dim); }
+.btn-del { background: none; border: none; color: var(–dim); font-size: 14px; cursor: pointer; }
+
+.res-btns { display: flex; gap: 8px; margin-top: 10px; }
+.res-btn { flex: 1; padding: 10px; border: 2px solid var(–border); border-radius: 8px; background: transparent; font-size: 12px; font-weight: 700; font-family: ‘Noto Sans JP’, sans-serif; cursor: pointer; transition: all 0.2s; color: var(–dim); }
+.res-btn.win { border-color: var(–green); color: var(–green); }
+.res-btn.win.sel { background: var(–green); color: #000; }
+.res-btn.lose { border-color: var(–red); color: var(–red); }
+.res-btn.lose.sel { background: var(–red); color: #fff; }
+.res-btn.pend.sel { background: var(–border); color: var(–text); }
+.btn-save { width: 100%; margin-top: 10px; background: var(–s3); border: 1px solid var(–gold); color: var(–gold); border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 700; font-family: ‘Noto Sans JP’, sans-serif; cursor: pointer; }
+
+.empty { text-align: center; padding: 40px 16px; color: var(–dim); font-size: 13px; }
+.empty-i { font-size: 36px; margin-bottom: 10px; }
+
+/* AI結果プレビュー */
+.ai-result-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.ai-result-table th { background: var(–s1); color: var(–gold); padding: 6px 8px; text-align: left; font-size: 10px; letter-spacing: 1px; }
+.ai-result-table td { padding: 7px 8px; border-bottom: 1px solid var(–border); }
+.ai-result-table tr:last-child td { border-bottom: none; }
+.btn-apply { width: 100%; margin-top: 10px; background: var(–green); color: #000; border: none; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 900; font-family: ‘Noto Sans JP’, sans-serif; cursor: pointer; }
+</style>
+
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">JIKU MASTER</div>
+    <div class="hdr-sub">AI読み取り × 消去法 × 期待値判定 × 記録</div>
+  </div>
+  <div class="budget-pill">
+    <span>予算¥</span>
+    <input type="number" id="budget" value="10000" inputmode="numeric">
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="sw('input')">① AI読取</div>
+  <div class="tab" onclick="sw('check')">② 消去法</div>
+  <div class="tab" onclick="sw('result')">③ 判定</div>
+  <div class="tab" onclick="sw('rec')">④ 記録</div>
+  <div class="tab" onclick="sw('hist')">履歴</div>
+</div>
+
+<!-- ① AI読取・馬入力 -->
+
+<div class="sec active" id="tab-input">
+
+  <!-- AI SCAN -->
+
+  <div class="card">
+    <div class="card-label">📸 出走表スクリーンショット読み取り</div>
+    <div class="scan-zone" id="scan-zone">
+      <input type="file" accept="image/*" id="img-input" onchange="onImageSelect(event)">
+      <div class="scan-icon">📷</div>
+      <div class="scan-text">タップして画像を選択</div>
+      <div class="scan-sub">JRA-VAN・netkeiba・出馬表のスクショをどうぞ</div>
+      <img id="scan-preview" class="scan-preview">
+    </div>
+    <button class="btn-ai" id="btn-ai-scan" onclick="runAIScan()">🤖 AIで馬名・オッズを読み取る</button>
+    <div class="ai-status" id="ai-status"></div>
+    <div id="ai-result-area"></div>
+  </div>
+
+  <!-- RACE INFO -->
+
+  <div class="card">
+    <div class="card-label">レース情報</div>
+    <div class="grid2" style="margin-bottom:8px;">
+      <div class="ig"><label>レース名</label><input type="text" id="rname" placeholder="例：大阪杯"></div>
+      <div class="ig"><label>日付</label><input type="date" id="rdate"></div>
+    </div>
+    <div class="grid3">
+      <div class="ig"><label>競馬場</label>
+        <select id="rvenue"><option>阪神</option><option>東京</option><option>中山</option><option>京都</option><option>中京</option><option>新潟</option><option>福島</option><option>小倉</option><option>札幌</option><option>函館</option></select>
+      </div>
+      <div class="ig"><label>距離(m)</label><input type="number" id="rdist" placeholder="2000" inputmode="numeric"></div>
+      <div class="ig"><label>馬場</label>
+        <select id="rtrack"><option>良</option><option>稍重</option><option>重</option><option>不良</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding-bottom:8px;">
+    <div class="card-label">ケリー倍率</div>
+    <div class="kelly-row">
+      <button class="km-btn" onclick="setKelly(0.25,this)">1/4</button>
+      <button class="km-btn active" onclick="setKelly(0.5,this)">1/2 推奨</button>
+      <button class="km-btn" onclick="setKelly(0.75,this)">3/4</button>
+      <button class="km-btn" onclick="setKelly(1.0,this)">フル</button>
+    </div>
+  </div>
+
+  <div class="h-header">
+    <div style="font-size:11px;color:var(--gold);letter-spacing:2px;font-weight:700;">出走馬</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-sm" onclick="clearHorses()">リセット</button>
+      <button class="btn-add" onclick="addHorse()">＋ 追加</button>
+    </div>
+  </div>
+  <div id="horse-list"></div>
+  <button class="btn-analyze" onclick="goCheck()">② 消去法チェックへ →</button>
+</div>
+
+<!-- ② 消去法 -->
+
+<div class="sec" id="tab-check">
+  <div style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.7;">
+    各馬をタップして7項目を評価。<br>
+    <span style="color:var(--green);">◎=得意・強化</span>　<span style="color:var(--gold);">△=普通</span>　<span style="color:var(--red);">✕=消し理由</span>
+  </div>
+  <div id="check-list"></div>
+  <button class="btn-analyze" onclick="goResult()">③ 判定結果へ →</button>
+</div>
+
+<!-- ③ 判定 -->
+
+<div class="sec" id="tab-result">
+  <div id="result-content"><div class="empty"><div class="empty-i">⚡</div>馬を入力して判定してください</div></div>
+</div>
+
+<!-- ④ 記録 -->
+
+<div class="sec" id="tab-rec">
+  <div class="card">
+    <div class="card-label">購入記録</div>
+    <div class="grid2" style="margin-bottom:8px;">
+      <div class="ig"><label>レース名</label><input type="text" id="rrname" placeholder="例：大阪杯"></div>
+      <div class="ig"><label>軸馬名</label><input type="text" id="rrhorse" placeholder="例：レーベンスティール"></div>
+    </div>
+    <div class="grid3" style="margin-bottom:8px;">
+      <div class="ig"><label>単勝オッズ</label><input type="number" id="rrodds" placeholder="8.1" inputmode="decimal"></div>
+      <div class="ig"><label>賭け金(円)</label><input type="number" id="rramount" placeholder="1000" inputmode="numeric"></div>
+      <div class="ig"><label>日付</label><input type="date" id="rrdate"></div>
+    </div>
+    <div class="ig">
+      <label>買った理由（1行で）</label>
+      <textarea id="rrreason" rows="2" placeholder="例：ルメール乗り替わり・コース実績あり・5人気で歪み大"></textarea>
+    </div>
+    <div style="margin-top:10px;">
+      <div style="font-size:10px;color:var(--dim);margin-bottom:6px;">結果</div>
+      <div class="res-btns">
+        <button class="res-btn win" id="rbwin" onclick="setRes('win')">✓ 的中</button>
+        <button class="res-btn lose" id="rblose" onclick="setRes('lose')">✗ 外れ</button>
+        <button class="res-btn pend" id="rbpend" onclick="setRes('pend')" style="border-color:var(--border);">― 未定</button>
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveRec()">💾 記録を保存</button>
+  </div>
+</div>
+
+<!-- 履歴 -->
+
+<div class="sec" id="tab-hist">
+  <div id="stats-area"></div>
+  <div id="hist-list"></div>
+</div>
+
+<script>
+let horses = [], hid = 0, kellyMul = 0.5, recRes = 'pend';
+let records = JSON.parse(localStorage.getItem('jm_recs_v2') || '[]');
+let selectedImageBase64 = null;
+let aiParsedHorses = [];
+
+const CHECKS = [
+  { id:'dist',   label:'距離・コース適性' },
+  { id:'form',   label:'近走成績の内容' },
+  { id:'jockey', label:'騎手評価' },
+  { id:'track',  label:'馬場適性' },
+  { id:'weight', label:'斤量変化' },
+  { id:'inter',  label:'間隔・ローテ' },
+  { id:'pace',   label:'展開適性' },
+];
+
+// ---- IMAGE HANDLING ----
+function onImageSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    selectedImageBase64 = dataUrl.split(',')[1];
+    const preview = document.getElementById('scan-preview');
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+    document.getElementById('btn-ai-scan').classList.add('show');
+    setAiStatus('', '');
+    document.getElementById('ai-result-area').innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function setAiStatus(msg, cls) {
+  const el = document.getElementById('ai-status');
+  if (!msg) { el.className = 'ai-status'; el.innerHTML = ''; return; }
+  el.className = `ai-status show ${cls}`;
+  el.innerHTML = msg;
+}
+
+async function runAIScan() {
+  if (!selectedImageBase64) return;
+  setAiStatus('<span class="loading-dots">AIが画像を解析中</span>', 'loading');
+  document.getElementById('ai-result-area').innerHTML = '';
+
+  const prompt = `この競馬の出走表画像から、全出走馬の情報を読み取ってください。
+
+以下のJSON形式のみで回答してください。前置きや説明は一切不要です。
+
+{
+  "race": "レース名（分かれば）",
+  "horses": [
+    {"num": 馬番, "name": "馬名", "odds": 単勝オッズ数値, "jockey": "騎手名", "pop": 人気順位},
+    ...
+  ]
+}
+
+馬番順に全頭並べてください。オッズが読み取れない場合は0としてください。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: selectedImageBase64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const text = data.content.map(c => c.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    aiParsedHorses = parsed.horses || [];
+    if (parsed.race) document.getElementById('rname').value = parsed.race;
+
+    renderAiResult(aiParsedHorses);
+    setAiStatus(`✓ ${aiParsedHorses.length}頭を読み取りました`, 'done');
+
+  } catch (err) {
+    setAiStatus(`読み取りエラー：${err.message}`, 'error');
+  }
+}
+
+function renderAiResult(list) {
+  if (!list.length) return;
+  const area = document.getElementById('ai-result-area');
+  area.innerHTML = `
+    <table class="ai-result-table">
+      <tr><th>馬番</th><th>馬名</th><th>人気</th><th>単勝オッズ</th><th>騎手</th></tr>
+      ${list.map(h => `
+        <tr>
+          <td style="color:var(--gold);font-weight:700;">${h.num}</td>
+          <td style="font-weight:700;">${h.name}</td>
+          <td style="color:var(--dim);">${h.pop || '-'}人気</td>
+          <td style="color:var(--gold);">${h.odds > 0 ? h.odds+'倍' : '-'}</td>
+          <td style="color:var(--dim);font-size:11px;">${h.jockey || '-'}</td>
+        </tr>`).join('')}
+    </table>
+    <button class="btn-apply" onclick="applyAiHorses()">✓ この内容で馬リストに反映する</button>
+  `;
+}
+
+function applyAiHorses() {
+  horses = [];
+  hid = 0;
+  aiParsedHorses.forEach(h => {
+    hid++;
+    horses.push({
+      id: hid,
+      name: h.name || '',
+      score: '',
+      odds: h.odds > 0 ? h.odds : '',
+      custom_prob: '',
+      checks: {},
+      reasons: {}
+    });
+  });
+  renderInput();
+  setAiStatus(`✓ ${horses.length}頭を馬リストに反映しました`, 'done');
+  // scroll to horse list
+  document.getElementById('horse-list').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ---- KELLY ----
+function setKelly(v, btn) {
+  kellyMul = v;
+  document.querySelectorAll('.km-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ---- HORSES ----
+function addHorse() {
+  hid++;
+  horses.push({ id: hid, name:'', score:'', odds:'', custom_prob:'', checks:{}, reasons:{} });
+  renderInput();
+}
+function removeHorse(id) { horses = horses.filter(h => h.id !== id); renderInput(); }
+function clearHorses() { horses = []; hid = 0; renderInput(); }
+
+function syncFromDOM() {
+  horses.forEach(h => {
+    h.name = document.getElementById(`hn-${h.id}`)?.value || h.name;
+    h.score = parseFloat(document.getElementById(`hs-${h.id}`)?.value) || 0;
+    h.odds = parseFloat(document.getElementById(`ho-${h.id}`)?.value) || 0;
+    h.custom_prob = parseFloat(document.getElementById(`hp-${h.id}`)?.value) || 0;
+  });
+}
+
+function renderInput() {
+  const el = document.getElementById('horse-list');
+  if (!horses.length) { el.innerHTML = `<div class="empty"><div class="empty-i">🐴</div>馬を追加するか、上のスクショ読み取りを使ってください</div>`; return; }
+  el.innerHTML = horses.map((h, i) => `
+    <div class="hcard" id="hc-${h.id}">
+      <div class="htop">
+        <div class="hnum">${i+1}</div>
+        <input class="hname" type="text" placeholder="馬名" value="${h.name}" id="hn-${h.id}" oninput="h_upd(${h.id},'name',this.value)">
+        <div>
+          <div class="grid3">
+            <div><div class="hinp-label">スコア</div><input type="number" inputmode="decimal" placeholder="25" value="${h.score||''}" id="hs-${h.id}" oninput="h_upd(${h.id},'score',this.value)" style="background:var(--s1);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;text-align:center;padding:4px 2px;outline:none;width:52px;"></div>
+            <div><div class="hinp-label">実オッズ</div><input type="number" inputmode="decimal" placeholder="8.0" value="${h.odds||''}" id="ho-${h.id}" oninput="h_upd(${h.id},'odds',this.value)" style="background:var(--s1);border:1px solid var(--border);border-radius:5px;color:var(--gold);font-size:12px;text-align:center;padding:4px 2px;outline:none;width:52px;"></div>
+            <div><div class="hinp-label">的中率%</div><input type="number" inputmode="decimal" placeholder="任意" value="${h.custom_prob||''}" id="hp-${h.id}" oninput="h_upd(${h.id},'custom_prob',this.value)" style="background:var(--s1);border:1px solid var(--border);border-radius:5px;color:var(--blue);font-size:12px;text-align:center;padding:4px 2px;outline:none;width:52px;"></div>
+          </div>
+        </div>
+        <button class="btn-x" onclick="removeHorse(${h.id})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+function h_upd(id, f, v) { const h = horses.find(x => x.id===id); if(h) h[f] = v; }
+
+// ---- CHECK ----
+function renderCheck() {
+  const el = document.getElementById('check-list');
+  if (!horses.length) { el.innerHTML = `<div class="empty"><div class="empty-i">🐴</div>馬を入力してください</div>`; return; }
+  el.innerHTML = horses.map((h, i) => {
+    const score = calcAbsScore(h);
+    const elim = isElim(h);
+    const { color, label, cls } = absVerdict(h, score);
+    const bw = Math.round((score / (CHECKS.length * 2)) * 100);
+    return `
+    <div class="hcard ${elim?'elim':score>=10?'pick':score>=7?'watch':''}" id="ck-${h.id}">
+      <div class="htop" style="cursor:pointer;" onclick="toggleCheck(${h.id})">
+        <div class="hnum">${i+1}</div>
+        <div style="flex:1;font-size:14px;font-weight:700;">${h.name||'馬'+(i+1)}</div>
+        <div style="font-size:12px;color:var(--gold);margin-right:8px;">${h.odds?h.odds+'倍':''}</div>
+        <div style="font-size:10px;color:var(--dim);">▼</div>
+      </div>
+      <div id="ck-body-${h.id}" style="display:none;">
+        <div class="cklist">${CHECKS.map(c => renderCI(h, c)).join('')}</div>
+      </div>
+      <div class="sfooter">
+        <div class="snum" style="color:${color}">${score}</div>
+        <div class="sbar-wrap">
+          <div class="sbar-label">絶対スコア ${score}/${CHECKS.length*2}</div>
+          <div class="sbar"><div class="sfill" style="width:${bw}%;background:${color};"></div></div>
+        </div>
+        <div class="vbadge ${cls}">${label}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCheck(id) {
+  const body = document.getElementById(`ck-body-${id}`);
+  if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderCI(h, c) {
+  const v = h.checks[c.id] || 0;
+  const r = h.reasons[c.id] || '';
+  return `
+  <div class="ci">
+    <div class="ci-top">
+      <div class="ci-label">${c.label}</div>
+      <div class="sc-btns">
+        <button class="sc-btn ${v===2?'g':''}" onclick="setChk(${h.id},'${c.id}',2)">◎</button>
+        <button class="sc-btn ${v===1?'m':''}" onclick="setChk(${h.id},'${c.id}',1)">△</button>
+        <button class="sc-btn ${v===-1?'b':''}" onclick="setChk(${h.id},'${c.id}',-1)">✕</button>
+      </div>
+    </div>
+    <input class="elim-inp ${v===-1?'show':''}" type="text" placeholder="消した理由..."
+      value="${r}" oninput="setReason(${h.id},'${c.id}',this.value)">
+  </div>`;
+}
+
+function setChk(hid, cid, val) {
+  const h = horses.find(x => x.id===hid); if(!h) return;
+  h.checks[cid] = h.checks[cid]===val ? 0 : val;
+  renderCheck();
+  const body = document.getElementById(`ck-body-${hid}`);
+  if (body) body.style.display = 'block';
+}
+function setReason(hid, cid, val) { const h = horses.find(x=>x.id===hid); if(h) h.reasons[cid]=val; }
+function calcAbsScore(h) { return Object.values(h.checks).reduce((s,v) => v===2?s+2:v===1?s+1:s, 0); }
+function isElim(h) { return Object.values(h.checks).some(v=>v===-1); }
+function absVerdict(h, score) {
+  if (isElim(h)) return { color:'var(--red)', label:'消し', cls:'vb-elim' };
+  if (score >= 10) return { color:'var(--green)', label:'◎軸', cls:'vb-pick' };
+  if (score >= 7)  return { color:'var(--gold)', label:'○有力', cls:'vb-watch' };
+  return { color:'var(--dim)', label:'様子見', cls:'vb-none' };
+}
+
+// ---- RESULT ----
+function calcResult() {
+  syncFromDOM();
+  const budget = parseFloat(document.getElementById('budget').value) || 10000;
+  const totalScore = horses.reduce((s,h) => s+(h.score||0), 0);
+  return horses.map(h => {
+    const absScore = calcAbsScore(h);
+    const elim = isElim(h);
+    const impliedProb = totalScore > 0 ? (h.score||0) / totalScore : 0;
+    const prob = h.custom_prob > 0 ? h.custom_prob/100 : impliedProb;
+    const odds = h.odds || 0;
+    const impliedOdds = prob > 0 ? 1/prob : 0;
+    const distortion = odds > 0 && impliedOdds > 0 ? odds/impliedOdds : 0;
+    let kelly = 0, betAmt = 0;
+    if (odds > 0 && prob > 0) {
+      const b = odds - 1, q = 1 - prob;
+      kelly = (b * prob - q) / b;
+      if (kelly > 0) betAmt = Math.round(budget * kelly * kellyMul / 100) * 100;
+    }
+    const buySignal = !elim && distortion >= 1.3 && kelly > 0 && odds >= 5 && odds <= 20;
+    return { ...h, absScore, elim, impliedProb, prob, impliedOdds, distortion, kelly, betAmt, buySignal };
+  });
+}
+
+function renderResult() {
+  const results = calcResult();
+  const buyList = results.filter(r => r.buySignal);
+  const sorted = [...results].sort((a,b) => {
+    if (a.elim && !b.elim) return 1;
+    if (!a.elim && b.elim) return -1;
+    if (a.buySignal && !b.buySignal) return -1;
+    if (!a.buySignal && b.buySignal) return 1;
+    return b.distortion - a.distortion;
+  });
+
+  let html = '';
+
+  if (buyList.length === 1) {
+    const h = buyList[0];
+    html += `<div class="card"><div class="verdict-hero">
+      <div class="vh-label">軸馬確定 ◎</div>
+      <div class="vh-name" style="color:var(--green)">${h.name||'？'}</div>
+      <div style="font-size:18px;color:var(--gold);margin:4px 0;">${h.odds}倍</div>
+      <div class="vh-sub">歪み${h.distortion.toFixed(2)} ／ 推奨¥${h.betAmt.toLocaleString()}</div>
+    </div></div>`;
+  } else if (buyList.length === 0) {
+    html += `<div class="card"><div class="verdict-hero">
+      <div class="vh-label">判定結果</div>
+      <div class="vh-name" style="color:var(--red);font-size:22px;">買い馬なし</div>
+      <div class="vh-sub">このレースは見送り推奨</div>
+    </div></div>`;
+  } else {
+    html += `<div class="card"><div class="verdict-hero">
+      <div class="vh-label">判定結果</div>
+      <div class="vh-name" style="color:var(--gold);font-size:22px;">候補${buyList.length}頭</div>
+      <div class="vh-sub">最も歪みの大きい1頭に絞るか見送り推奨</div>
+    </div></div>`;
+  }
+
+  html += `<div class="card"><div class="card-label">総合ランキング</div>`;
+  sorted.forEach((r, i) => {
+    const dc = r.distortion >= 1.5 ? 'var(--green)' : r.distortion >= 1.3 ? 'var(--gold)' : r.distortion < 0.8 ? 'var(--red)' : 'var(--dim)';
+    const elimReas = CHECKS.filter(c => r.checks[c.id]===-1).map(c=>c.label).join('・');
+    html += `<div class="rank-row">
+      <div class="rr-n">${i+1}</div>
+      <div class="rr-info">
+        <div class="rr-name" style="color:${r.elim?'var(--red)':r.buySignal?'var(--green)':'var(--text)'}">${r.name||'？'} ${r.buySignal?'◎':''}</div>
+        <div class="rr-detail">${r.elim ? `消：${elimReas}` : `絶対${r.absScore}pt ／ 歪み${r.distortion.toFixed(2)} ／ ${r.betAmt>0?'¥'+r.betAmt.toLocaleString():'ケリー↓'}`}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px;color:var(--gold);">${r.odds?r.odds+'倍':''}</div>
+        <div style="font-size:11px;color:${dc};">歪み${r.distortion>0?r.distortion.toFixed(2):'-'}</div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  if (buyList.length >= 1) {
+    const h = buyList[0];
+    const kp = (h.kelly * kellyMul * 100).toFixed(1);
+    html += `<div class="card"><div class="card-label">ケリー基準詳細</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <div class="chip chip-blue">想定オッズ ${h.impliedOdds.toFixed(1)}倍</div>
+        <div class="chip chip-gold">歪み指数 ${h.distortion.toFixed(2)}</div>
+        <div class="chip chip-green">ケリー ${kp}%</div>
+        ${h.betAmt>0?`<div class="chip chip-bet">推奨賭け金 ¥${h.betAmt.toLocaleString()}</div>`:''}
+      </div>
+    </div>`;
+    document.getElementById('rrname').value = document.getElementById('rname').value || '';
+    document.getElementById('rrhorse').value = h.name || '';
+    document.getElementById('rrodds').value = h.odds || '';
+    document.getElementById('rrdate').value = document.getElementById('rdate').value || '';
+    if (h.betAmt) document.getElementById('rramount').value = h.betAmt;
+  }
+
+  document.getElementById('result-content').innerHTML = html;
+}
+
+// ---- NAV ----
+function goCheck() { syncFromDOM(); renderCheck(); sw('check'); }
+function goResult() { renderResult(); sw('result'); }
+
+// ---- RECORD ----
+function setRes(v) {
+  recRes = v;
+  ['win','lose','pend'].forEach(r => document.getElementById('rb'+r).classList.toggle('sel', r===v));
+}
+function saveRec() {
+  const horse = document.getElementById('rrhorse').value;
+  if (!horse) { alert('馬名を入力してください'); return; }
+  records.unshift({
+    id: Date.now(),
+    race: document.getElementById('rrname').value,
+    horse,
+    odds: parseFloat(document.getElementById('rrodds').value)||0,
+    amount: parseInt(document.getElementById('rramount').value)||0,
+    reason: document.getElementById('rrreason').value,
+    result: recRes,
+    date: document.getElementById('rrdate').value || new Date().toISOString().slice(0,10)
+  });
+  localStorage.setItem('jm_recs_v2', JSON.stringify(records));
+  ['rrname','rrhorse','rrodds','rramount','rrreason'].forEach(id => document.getElementById(id).value='');
+  setRes('pend');
+  renderHist();
+  sw('hist');
+}
+function delRec(id) { records=records.filter(r=>r.id!==id); localStorage.setItem('jm_recs_v2',JSON.stringify(records)); renderHist(); }
+
+// ---- HISTORY ----
+function renderHist() {
+  const sa = document.getElementById('stats-area');
+  const hl = document.getElementById('hist-list');
+  if (!records.length) { sa.innerHTML=''; hl.innerHTML=`<div class="empty"><div class="empty-i">📋</div>まだ記録がありません</div>`; return; }
+  const decided = records.filter(r=>r.result!=='pend');
+  const wins = records.filter(r=>r.result==='win');
+  const wr = decided.length ? Math.round(wins.length/decided.length*100) : 0;
+  const tb = records.reduce((s,r)=>s+r.amount,0);
+  const tr = wins.reduce((s,r)=>s+Math.round(r.amount*r.odds),0);
+  const roi = tb ? Math.round(tr/tb*100) : 0;
+  sa.innerHTML = `<div class="stats-grid">
+    <div class="stat-cell"><div class="stat-n">${records.length}</div><div class="stat-l">購入回数</div></div>
+    <div class="stat-cell"><div class="stat-n" style="color:${wr>=30?'var(--green)':'var(--red)'}">${wr}%</div><div class="stat-l">的中率</div></div>
+    <div class="stat-cell"><div class="stat-n" style="color:${roi>=100?'var(--green)':'var(--red)'}">${roi}%</div><div class="stat-l">回収率</div></div>
+  </div>`;
+  hl.innerHTML = records.map(r => {
+    const rc = r.result==='win'?'hib-win':r.result==='lose'?'hib-lose':'hib-pend';
+    const rl = r.result==='win'?'的中':r.result==='lose'?'外れ':'未定';
+    const ret = r.result==='win'&&r.amount&&r.odds?`　払戻¥${Math.round(r.amount*r.odds).toLocaleString()}`:'';
+    return `<div class="hi">
+      <div class="hi-top">
+        <div><div class="hi-race">${r.race||'レース未入力'}</div><div class="hi-date">${r.date}</div></div>
+        <button class="btn-del" onclick="delRec(${r.id})">🗑</button>
+      </div>
+      <div class="hi-horse">${r.horse}</div>
+      <div class="hi-meta">単勝 ${r.odds}倍　¥${r.amount.toLocaleString()}${ret}</div>
+      ${r.reason?`<div class="hi-reason">💬 ${r.reason}</div>`:''}
+      <span class="hi-badge ${rc}">${rl}</span>
+    </div>`;
+  }).join('');
+}
+
+// ---- TAB SWITCH ----
+function sw(name) {
+  const names = ['input','check','result','rec','hist'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i]===name));
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='hist') renderHist();
+}
+
+// ---- INIT ----
+document.getElementById('rdate').value = new Date().toISOString().slice(0,10);
+document.getElementById('rrdate').value = new Date().toISOString().slice(0,10);
+setRes('pend');
+</script>
+
+</body>
+</html>
