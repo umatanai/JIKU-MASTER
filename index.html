@@ -2,39 +2,54 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>シンプルじゃんけん</title>
+    <title>即席あみだくじ</title>
     <style>
-        body { text-align: center; font-family: sans-serif; padding-top: 50px; }
-        button { font-size: 24px; padding: 10px 20px; margin: 10px; cursor: pointer; }
-        #result { font-size: 32px; font-weight: bold; margin-top: 30px; color: #333; }
+        body { text-align: center; font-family: sans-serif; }
+        canvas { background: #f9f9f9; border: 1px solid #ccc; margin-top: 20px; }
+        button { font-size: 18px; padding: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h1>AIとじゃんけん！</h1>
-    <button onclick="play('グー')">✊ グー</button>
-    <button onclick="play('チョキ')">✌️ チョキ</button>
-    <button onclick="play('パー')">✋ パー</button>
-    <div id="result">何を出しますか？</div>
+    <h1>簡単あみだくじ</h1>
+    <p>人数：<input type="number" id="players" value="4" min="2" max="10"> 
+    <button onclick="drawAmida()">くじを作成</button></p>
+    <canvas id="amidaCanvas" width="400" height="400"></canvas>
 
     <script>
-        function play(userHand) {
-            const hands = ['グー', 'チョキ', 'パー'];
-            const aiHand = hands[Math.floor(Math.random() * 3)];
-            let message = `あなたは【${userHand}】、AIは【${aiHand}】。<br>`;
+        function drawAmida() {
+            const canvas = document.getElementById('amidaCanvas');
+            const ctx = canvas.getContext('2d');
+            const num = document.getElementById('players').value;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (userHand === aiHand) {
-                message += "結果は… 引き分け！";
-            } else if (
-                (userHand === 'グー' && aiHand === 'チョキ') ||
-                (userHand === 'チョキ' && aiHand === 'パー') ||
-                (userHand === 'パー' && aiHand === 'グー')
-            ) {
-                message += "結果は… <span style='color:red;'>あなたの勝ち！</span>";
-            } else {
-                message += "結果は… <span style='color:blue;'>あなたの負け！</span>";
+            const spacing = canvas.width / (parseInt(num) + 1);
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 2;
+
+            // 縦線を引く
+            for (let i = 1; i <= num; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * spacing, 50);
+                ctx.lineTo(i * spacing, 350);
+                ctx.stroke();
+
+                // 横線をランダムに引く
+                if (i < num) {
+                    for (let j = 70; j < 330; j += 40) {
+                        if (Math.random() > 0.5) {
+                            ctx.beginPath();
+                            ctx.moveTo(i * spacing, j);
+                            ctx.lineTo((i + 1) * spacing, j);
+                            ctx.stroke();
+                        }
+                    }
+                }
             }
-            document.getElementById('result').innerHTML = message;
+            ctx.fillText("スタート", spacing - 20, 40);
+            ctx.fillText("ゴール", spacing - 15, 370);
         }
+        // 初回実行
+        drawAmida();
     </script>
 </body>
 </html>
