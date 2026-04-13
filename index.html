@@ -2,145 +2,39 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>海賊危機一髪！</title>
+    <title>シンプルじゃんけん</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            background-color: #f4f4f9;
-            margin-top: 50px;
-        }
-        h1 {
-            color: #333;
-        }
-        #pirate-container {
-            font-size: 80px;
-            margin-bottom: 20px;
-            transition: transform 0.2s;
-        }
-        .pop-up {
-            transform: translateY(-100px) scale(1.5) rotate(15deg);
-            color: red;
-        }
-        #slots {
-            display: grid;
-            grid-template-columns: repeat(4, 60px);
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .slot-btn {
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            background-color: #8b5a2b; /* 樽のような色 */
-            color: white;
-            border: 2px solid #5c3a18;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-        }
-        .slot-btn:hover {
-            background-color: #a06b38;
-        }
-        .slot-btn:disabled {
-            background-color: #ccc;
-            border-color: #999;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        #message {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            height: 30px;
-        }
-        #reset-btn {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #reset-btn:hover {
-            background-color: #c0392b;
-        }
+        body { text-align: center; font-family: sans-serif; padding-top: 50px; }
+        button { font-size: 24px; padding: 10px 20px; margin: 10px; cursor: pointer; }
+        #result { font-size: 32px; font-weight: bold; margin-top: 30px; color: #333; }
     </style>
 </head>
 <body>
-
-    <h1>海賊危機一髪！</h1>
-    <div id="pirate-container">🛢️</div>
-    <div id="message">剣を刺す穴（ボタン）を選んでね！</div>
-    
-    <div id="slots">
-        </div>
-
-    <button id="reset-btn" onclick="initGame()">もう一度遊ぶ</button>
+    <h1>AIとじゃんけん！</h1>
+    <button onclick="play('グー')">✊ グー</button>
+    <button onclick="play('チョキ')">✌️ チョキ</button>
+    <button onclick="play('パー')">✋ パー</button>
+    <div id="result">何を出しますか？</div>
 
     <script>
-        const totalSlots = 16; // 穴の数
-        let bombSlot = -1; // ハズレ（海賊が飛ぶ）穴
-        let gameOver = false;
+        function play(userHand) {
+            const hands = ['グー', 'チョキ', 'パー'];
+            const aiHand = hands[Math.floor(Math.random() * 3)];
+            let message = `あなたは【${userHand}】、AIは【${aiHand}】。<br>`;
 
-        const slotsContainer = document.getElementById('slots');
-        const messageDisplay = document.getElementById('message');
-        const pirateContainer = document.getElementById('pirate-container');
-
-        // ゲームの初期化
-        function initGame() {
-            slotsContainer.innerHTML = ''; // スロットをクリア
-            gameOver = false;
-            pirateContainer.innerHTML = '🛢️'; // 樽の絵文字
-            pirateContainer.classList.remove('pop-up');
-            messageDisplay.style.color = '#333';
-            messageDisplay.innerText = '剣を刺す穴を選んでね！';
-
-            // ランダムなハズレ穴を決定（0 〜 15の間）
-            bombSlot = Math.floor(Math.random() * totalSlots);
-
-            // ボタンを生成
-            for (let i = 0; i < totalSlots; i++) {
-                const btn = document.createElement('button');
-                btn.classList.add('slot-btn');
-                btn.innerText = '🗡️'; // 剣の絵文字
-                btn.onclick = () => insertSword(i, btn);
-                slotsContainer.appendChild(btn);
-            }
-        }
-
-        // 剣を刺した時の処理
-        function insertSword(index, button) {
-            if (gameOver) return;
-
-            button.disabled = true; // 押したボタンを無効化
-            button.innerText = '✖';
-
-            if (index === bombSlot) {
-                // ハズレ（海賊が飛ぶ）
-                gameOver = true;
-                pirateContainer.innerHTML = '🏴‍☠️'; // 海賊の絵文字に変更
-                pirateContainer.classList.add('pop-up'); // 飛び出すアニメーション
-                messageDisplay.style.color = 'red';
-                messageDisplay.innerText = 'ドカーン！海賊が飛び出しました！あなたの負けです！';
-                disableAllButtons();
+            if (userHand === aiHand) {
+                message += "結果は… 引き分け！";
+            } else if (
+                (userHand === 'グー' && aiHand === 'チョキ') ||
+                (userHand === 'チョキ' && aiHand === 'パー') ||
+                (userHand === 'パー' && aiHand === 'グー')
+            ) {
+                message += "結果は… <span style='color:red;'>あなたの勝ち！</span>";
             } else {
-                // セーフ
-                messageDisplay.innerText = 'セーフ！次の人の番です。';
+                message += "結果は… <span style='color:blue;'>あなたの負け！</span>";
             }
+            document.getElementById('result').innerHTML = message;
         }
-
-        // 全てのボタンを無効化する処理
-        function disableAllButtons() {
-            const buttons = document.querySelectorAll('.slot-btn');
-            buttons.forEach(btn => btn.disabled = true);
-        }
-
-        // ページ読み込み時にゲームを開始
-        window.onload = initGame;
     </script>
 </body>
 </html>
