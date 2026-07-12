@@ -146,7 +146,7 @@
   /* ── 馬券種チップ ───────────────────────────── */
   .bet-chips {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
   .bet-chip { width: 100%; }
@@ -531,10 +531,6 @@
       <div class="bet-chips">
         <div class="bet-chip"><input type="checkbox" id="c-tan"><label for="c-tan">単勝</label></div>
         <div class="bet-chip"><input type="checkbox" id="c-fuku"><label for="c-fuku">複勝</label></div>
-        <div class="bet-chip"><input type="checkbox" id="c-wide"><label for="c-wide">ワイド</label></div>
-        <div class="bet-chip"><input type="checkbox" id="c-uma"><label for="c-uma">馬連</label></div>
-        <div class="bet-chip"><input type="checkbox" id="c-sanren"><label for="c-sanren">三連複</label></div>
-        <div class="bet-chip"><input type="checkbox" id="c-santan"><label for="c-santan">三連単</label></div>
       </div>
     </div>
   </div>
@@ -649,10 +645,6 @@
       <div class="bet-chips">
         <div class="bet-chip"><input type="checkbox" id="e-tan"><label for="e-tan">単勝</label></div>
         <div class="bet-chip"><input type="checkbox" id="e-fuku"><label for="e-fuku">複勝</label></div>
-        <div class="bet-chip"><input type="checkbox" id="e-wide"><label for="e-wide">ワイド</label></div>
-        <div class="bet-chip"><input type="checkbox" id="e-uma"><label for="e-uma">馬連</label></div>
-        <div class="bet-chip"><input type="checkbox" id="e-sanren"><label for="e-sanren">三連複</label></div>
-        <div class="bet-chip"><input type="checkbox" id="e-santan"><label for="e-santan">三連単</label></div>
       </div>
     </div>
     <div class="field">
@@ -708,12 +700,10 @@
 /* ── データ管理 ───────────────────────────────── */
 const KEY = 'raceRecords_v6';
 const BET_MAP = {
-  'c-tan':'単勝','c-fuku':'複勝','c-wide':'ワイド',
-  'c-uma':'馬連','c-sanren':'三連複','c-santan':'三連単'
+  'c-tan':'単勝','c-fuku':'複勝'
 };
 const EDIT_MAP = {
-  'e-tan':'単勝','e-fuku':'複勝','e-wide':'ワイド',
-  'e-uma':'馬連','e-sanren':'三連複','e-santan':'三連単'
+  'e-tan':'単勝','e-fuku':'複勝'
 };
 
 function load() {
