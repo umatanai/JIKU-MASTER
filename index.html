@@ -124,7 +124,7 @@
   }
   .field { margin-bottom: 16px; }
 
-  select, textarea {
+  input[type=text], select, textarea {
     width: 100%;
     background: #F7F5F1;
     border: 1px solid rgba(26,47,69,0.18);
@@ -138,7 +138,7 @@
     appearance: none;
     -webkit-appearance: none;
   }
-  select:focus, textarea:focus {
+  input[type=text]:focus, select:focus, textarea:focus {
     border-color: var(--gold);
   }
   textarea { resize: vertical; min-height: 70px; }
@@ -303,6 +303,27 @@
   }
   .badge-win  { background: rgba(46,204,113,0.15); border: 1px solid var(--win);  color: var(--win); }
   .badge-lose { background: rgba(231,76,60,0.15);  border: 1px solid var(--lose); color: var(--lose); }
+
+  .h-horse-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .h-horse-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .h-finishing {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: rgba(26,47,69,0.08);
+    color: var(--gold);
+    border: 1px solid rgba(26,47,69,0.15);
+  }
 
   .h-reason {
     font-size: 0.8rem;
@@ -519,13 +540,21 @@
   </div>
 
   <div class="form-card">
-    <h2>予想・結果</h2>
+    <h2>予想</h2>
+    <div class="field">
+      <label class="field-label">馬名</label>
+      <input type="text" id="horse" placeholder="例：イクイノックス">
+    </div>
     <div class="field">
       <label class="field-label">購入根拠</label>
       <textarea id="reason" rows="2" placeholder="なぜ買うかを記録…"></textarea>
     </div>
+  </div>
+
+  <div class="form-card">
+    <h2>結果</h2>
     <div class="field">
-      <label class="field-label">結果</label>
+      <label class="field-label">的中 / 不的中</label>
       <div class="result-radio">
         <input type="radio" name="result" id="r-win" class="r-win" value="的中" checked>
         <label for="r-win">✓ 的中</label>
@@ -533,8 +562,23 @@
         <label for="r-lose">✗ 不的中</label>
       </div>
     </div>
+    <div class="row2">
+      <div class="field">
+        <label class="field-label">着順</label>
+        <div class="select-wrap">
+          <select id="finishing">
+            <option value="">—</option>
+            <option>1着</option><option>2着</option><option>3着</option>
+            <option>4着</option><option>5着</option><option>6着</option>
+            <option>7着</option><option>8着</option><option>9着</option>
+            <option>10着</option><option>11着以下</option><option>中止・除外</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="visibility:hidden"></div>
+    </div>
     <div class="field">
-      <label class="field-label">反省・敗因</label>
+      <label class="field-label">敗因</label>
       <textarea id="failure" rows="2" placeholder="外れた場合の分析（任意）"></textarea>
     </div>
     <button class="btn-primary" onclick="saveRecord()">記録を保存する</button>
@@ -612,11 +656,15 @@
       </div>
     </div>
     <div class="field">
+      <label class="field-label">馬名</label>
+      <input type="text" id="e-horse" placeholder="例：イクイノックス">
+    </div>
+    <div class="field">
       <label class="field-label">購入根拠</label>
       <textarea id="e-reason" rows="2"></textarea>
     </div>
     <div class="field">
-      <label class="field-label">結果</label>
+      <label class="field-label">的中 / 不的中</label>
       <div class="result-radio">
         <input type="radio" name="e-result" id="e-win" class="r-win" value="的中">
         <label for="e-win">✓ 的中</label>
@@ -625,7 +673,19 @@
       </div>
     </div>
     <div class="field">
-      <label class="field-label">反省・敗因</label>
+      <label class="field-label">着順</label>
+      <div class="select-wrap">
+        <select id="e-finishing">
+          <option value="">—</option>
+          <option>1着</option><option>2着</option><option>3着</option>
+          <option>4着</option><option>5着</option><option>6着</option>
+          <option>7着</option><option>8着</option><option>9着</option>
+          <option>10着</option><option>11着以下</option><option>中止・除外</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">敗因</label>
       <textarea id="e-failure" rows="2"></textarea>
     </div>
     <button class="btn-primary" onclick="saveEdit()">変更を保存する</button>
@@ -685,6 +745,8 @@ function saveRecord() {
     track: document.getElementById('track').value,
     distance: document.getElementById('distance').value,
     bets,
+    horse: document.getElementById('horse').value,
+    finishing: document.getElementById('finishing').value,
     reason: document.getElementById('reason').value,
     result: document.querySelector('input[name="result"]:checked').value,
     failure: document.getElementById('failure').value
@@ -696,6 +758,8 @@ function saveRecord() {
 
   // リセット
   Object.keys(BET_MAP).forEach(id => document.getElementById(id).checked = false);
+  document.getElementById('horse').value = '';
+  document.getElementById('finishing').value = '';
   document.getElementById('reason').value = '';
   document.getElementById('failure').value = '';
   document.getElementById('r-win').checked = true;
@@ -737,6 +801,11 @@ function renderHistory() {
             <span class="badge ${r.result === '的中' ? 'badge-win' : 'badge-lose'}">${r.result}</span>
           </div>
         </div>
+        ${(r.horse || r.finishing) ? `
+          <div class="h-horse-row">
+            ${r.horse ? `<span class="h-horse-name">🐴 ${esc(r.horse)}</span>` : ''}
+            ${r.finishing ? `<span class="h-finishing">${r.finishing}</span>` : ''}
+          </div>` : ''}
         ${r.reason ? `<div class="h-reason">📝 ${esc(r.reason)}</div>` : ''}
         ${r.failure ? `<div class="h-failure">⚠ ${esc(r.failure)}</div>` : ''}
       </div>
@@ -772,8 +841,10 @@ function openEdit(id) {
   Object.entries(EDIT_MAP).forEach(([eid, label]) => {
     document.getElementById(eid).checked = r.bets.includes(label);
   });
-  document.getElementById('e-reason').value  = r.reason || '';
-  document.getElementById('e-failure').value = r.failure || '';
+  document.getElementById('e-horse').value     = r.horse || '';
+  document.getElementById('e-finishing').value = r.finishing || '';
+  document.getElementById('e-reason').value    = r.reason || '';
+  document.getElementById('e-failure').value   = r.failure || '';
   if (r.result === '的中') document.getElementById('e-win').checked = true;
   else document.getElementById('e-lose').checked = true;
 
@@ -798,12 +869,14 @@ function saveEdit() {
 
   recs[idx] = {
     ...recs[idx],
-    track:    document.getElementById('e-track').value,
-    distance: document.getElementById('e-distance').value,
+    track:     document.getElementById('e-track').value,
+    distance:  document.getElementById('e-distance').value,
     bets,
-    reason:   document.getElementById('e-reason').value,
-    result:   document.querySelector('input[name="e-result"]:checked').value,
-    failure:  document.getElementById('e-failure').value
+    horse:     document.getElementById('e-horse').value,
+    finishing: document.getElementById('e-finishing').value,
+    reason:    document.getElementById('e-reason').value,
+    result:    document.querySelector('input[name="e-result"]:checked').value,
+    failure:   document.getElementById('e-failure').value
   };
   save(recs);
   closeEdit();
