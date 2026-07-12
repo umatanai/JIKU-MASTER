@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>競馬投資ログ</title>
+<title>競馬投資ログ（ライト）</title>
 <style>
   /* ── リセット & 変数 ───────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:       #0D1B2A;
-    --surface:  #132336;
-    --card:     #1A2F45;
-    --gold:     #C9A84C;
-    --gold-dim: #9A7A32;
-    --text:     #E8F4F8;
-    --muted:    #7EA8C4;
-    --win:      #2ECC71;
-    --lose:     #E74C3C;
-    --border:   rgba(201,168,76,0.25);
+    --bg:       #F0EDE6;
+    --surface:  #FFFFFF;
+    --card:     #FFFFFF;
+    --gold:     #1A2F45;
+    --gold-dim: #0D1B2A;
+    --text:     #1C2B3A;
+    --muted:    #7A8FA0;
+    --win:      #1A7A4A;
+    --lose:     #C0392B;
+    --border:   rgba(26,47,69,0.15);
     --radius:   10px;
     --font:     -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
   }
@@ -126,8 +126,8 @@
 
   select, textarea {
     width: 100%;
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: #F7F5F1;
+    border: 1px solid rgba(26,47,69,0.18);
     border-radius: 7px;
     color: var(--text);
     font-size: 0.95rem;
@@ -155,7 +155,7 @@
     display: block;
     width: 100%;
     padding: 9px 4px;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(26,47,69,0.2);
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -168,7 +168,7 @@
   }
   .bet-chip input:checked + label {
     background: var(--gold);
-    color: #0D1B2A;
+    color: #FFFFFF;
     border-color: var(--gold);
   }
 
@@ -184,11 +184,11 @@
     font-weight: 700;
     cursor: pointer;
     transition: all .2s;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(26,47,69,0.2);
     color: var(--muted);
   }
-  .result-radio .r-win + label { border-color: rgba(46,204,113,0.3); }
-  .result-radio .r-lose + label { border-color: rgba(231,76,60,0.3); }
+  .result-radio .r-win + label { border-color: rgba(26,122,74,0.4); }
+  .result-radio .r-lose + label { border-color: rgba(192,57,43,0.4); }
   .result-radio .r-win:checked + label { background: var(--win); color: #fff; border-color: var(--win); }
   .result-radio .r-lose:checked + label { background: var(--lose); color: #fff; border-color: var(--lose); }
 
@@ -197,7 +197,7 @@
     width: 100%;
     padding: 15px;
     background: var(--gold);
-    color: #0D1B2A;
+    color: #FFFFFF;
     font-size: 0.95rem;
     font-weight: 800;
     border: none;
@@ -249,9 +249,10 @@
     border-radius: var(--radius);
     overflow: hidden;
     position: relative;
+    box-shadow: 0 1px 4px rgba(26,47,69,0.08);
   }
 
-  /* 馬券風ミシン目ライン */
+  /* 馬券風ミシン目ライン — 芝色 */
   .h-card::before {
     content: '';
     position: absolute;
@@ -259,7 +260,7 @@
     width: 4px;
     background: repeating-linear-gradient(
       to bottom,
-      var(--gold) 0, var(--gold) 6px,
+      #2D6A4F 0, #2D6A4F 6px,
       transparent 6px, transparent 10px
     );
   }
@@ -319,7 +320,7 @@
   /* アクションボタン行 */
   .h-actions {
     display: flex;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid rgba(26,47,69,0.08);
   }
   .h-action-btn {
     flex: 1;
@@ -336,10 +337,10 @@
     justify-content: center;
     gap: 5px;
   }
-  .h-action-btn:hover { background: rgba(255,255,255,0.04); }
+  .h-action-btn:hover { background: rgba(26,47,69,0.05); }
   .h-action-btn.edit:hover { color: var(--gold); }
   .h-action-btn.del:hover  { color: var(--lose); }
-  .h-action-sep { width: 1px; background: rgba(255,255,255,0.06); }
+  .h-action-sep { width: 1px; background: rgba(26,47,69,0.08); }
 
   /* 空リスト */
   .empty-state {
@@ -363,7 +364,7 @@
   .modal-overlay.open { display: flex; }
 
   .modal {
-    background: var(--surface);
+    background: #F7F5F1;
     border: 1px solid var(--border);
     border-radius: 16px 16px 0 0;
     width: 100%;
@@ -394,8 +395,8 @@
 
   /* 削除確認モーダル */
   .confirm-modal {
-    background: var(--surface);
-    border: 1px solid rgba(231,76,60,0.4);
+    background: #FFFFFF;
+    border: 1px solid rgba(192,57,43,0.35);
     border-radius: 12px;
     padding: 24px 20px;
     width: calc(100% - 32px);
@@ -408,7 +409,7 @@
   .btn-cancel {
     flex: 1; padding: 12px;
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(26,47,69,0.25);
     border-radius: 8px;
     color: var(--muted);
     font-size: 0.9rem;
@@ -580,8 +581,21 @@
         <label class="field-label">距離</label>
         <div class="select-wrap">
           <select id="e-distance">
-            <option>1200m</option><option>1400m</option><option>1600m</option>
-            <option>1800m</option><option>2000m</option><option>2400m</option><option>2500m</option>
+            <optgroup label="芝">
+              <option>芝1000m</option><option>芝1200m</option><option>芝1400m</option>
+              <option>芝1500m</option><option>芝1600m</option><option>芝1700m</option>
+              <option>芝1800m</option><option>芝2000m</option><option>芝2200m</option>
+              <option>芝2400m</option><option>芝2500m</option><option>芝2600m</option>
+              <option>芝3000m</option><option>芝3200m</option><option>芝3400m</option>
+              <option>芝3600m</option>
+            </optgroup>
+            <optgroup label="ダート">
+              <option>ダ1000m</option><option>ダ1150m</option><option>ダ1200m</option>
+              <option>ダ1300m</option><option>ダ1400m</option><option>ダ1600m</option>
+              <option>ダ1700m</option><option>ダ1800m</option><option>ダ1900m</option>
+              <option>ダ2000m</option><option>ダ2100m</option><option>ダ2400m</option>
+              <option>ダ2500m</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -826,8 +840,8 @@ function showToast(msg, isError = false) {
   Object.assign(t.style, {
     position: 'fixed', bottom: '20px', left: '50%',
     transform: 'translateX(-50%)',
-    background: isError ? '#E74C3C' : '#C9A84C',
-    color: isError ? '#fff' : '#0D1B2A',
+    background: isError ? '#C0392B' : '#1A2F45',
+    color: '#FFFFFF',
     padding: '10px 22px', borderRadius: '20px',
     fontSize: '0.85rem', fontWeight: '700',
     zIndex: '999', whiteSpace: 'nowrap',
